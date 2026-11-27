@@ -65,8 +65,12 @@ To rebuild the derived data from the public sources (needs `h5py`):
 
 ## Data sources
 
-- Bertolini M et al. *Science* 371:57–64 (2021): footprint profiles from GEO GSE151959; Table S1 is downloaded by `fetch_data.py` and not redistributed here.
+- Bertolini M et al. *Science* 371:57–64 (2021): footprint profiles from GEO GSE151959. Table S1 itself is downloaded by `fetch_data.py` and not redistributed here; `data/disp_human.npz` keeps four of its columns (gene name, onset codon, confidence flag and RPKM).
 - Campbell A et al. *Mol. Cell* 85:999–1007 (2025): PDB 9GFT, two collided *E. coli* ribosomes.
 - PDB 4AC0 (TetR), 1LBI (LacI), 3BDN (λ cI).
 
-No licence has been chosen yet; all rights are reserved by the author until one is added.
+## Licence
+
+- **Code** (the Python and C sources, the HTML pages in `paper/render/` and `report_template.html`): MIT licence, see [LICENSE](LICENSE).
+- **Text, figures and results** (the manuscript and notes in `paper/`, everything in `paper/figures/`, `report.html` and `results/`): [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/), copyright 2026 Ruud Stoof.
+- **Data** in `data/`: the PDB files are in the public domain (CC0, wwPDB). `disp_ecoli.npz` and `disp_human.npz` are re-processed from GEO GSE151959 (the human file also from Table S1) of Bertolini et al. (2021); please cite that paper when you reuse them. `disome_geometry.npz` and `kernel_table.npz` were computed here from PDB 9GFT and are CC BY 4.0.
