@@ -1,0 +1,14 @@
+# environments and build products
+.venv/
+__pycache__/
+*.so
+.DS_Store
+
+# third-party data that is downloaded by fetch_data.py
+data/raw/
+data/bertolini/
+
+# generated
+results/fig/
+results/*_log.txt
+results_log.txt

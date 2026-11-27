@@ -1,0 +1,298 @@
+<title>Co-translationele dimerisatie</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&display=swap">
+<style>
+/* Layout: one reading column (68ch) with figures that break out to a wider measure; a lab-notebook register. */
+:root{
+  --bg:#f9f9f7; --surface:#fcfcfb; --fg:#0b0b0b; --fg2:#52514e; --muted:#898781; --line:#e1e0d9;
+  --accent:#2a78d6; --accent2:#eb6834; --mark:#eef4fc;
+  --ok-bg:#dff3df; --ok-fg:#005200; --part-bg:#fdeecb; --part-fg:#6b4a00; --no-bg:#fbe0dc; --no-fg:#8a1f1f;
+  --dl:block; --dd:none;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --cond:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d0d0d; --surface:#1a1a19; --fg:#f0efec; --fg2:#c3c2b7; --muted:#898781; --line:#2c2c2a;
+  --accent:#3987e5; --accent2:#d95926; --mark:#14233a;
+  --ok-bg:#12351a; --ok-fg:#8fdc97; --part-bg:#3a2c08; --part-fg:#f0c868; --no-bg:#3d1616; --no-fg:#f3a09a; --dl:none; --dd:block; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d0d0d; --surface:#1a1a19; --fg:#f0efec; --fg2:#c3c2b7; --muted:#898781; --line:#2c2c2a;
+  --accent:#3987e5; --accent2:#d95926; --mark:#14233a;
+  --ok-bg:#12351a; --ok-fg:#8fdc97; --part-bg:#3a2c08; --part-fg:#f0c868; --no-bg:#3d1616; --no-fg:#f3a09a; --dl:none; --dd:block; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--sans);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 80px}
+main{max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+main>*{margin:0;min-width:0}
+.view{display:flex;flex-direction:column;gap:20px}
+.view>*{max-width:68ch;width:100%;margin:0;min-width:0}
+.view>.wide{max-width:100%}
+.tabs{display:flex;flex-wrap:wrap;gap:4px;border-bottom:1px solid var(--line)}
+.tabs a{font:500 14px var(--sans);color:var(--fg2);text-decoration:none;padding:9px 14px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a[aria-current="page"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs a:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.verdict td:first-child{font-weight:500}
+.tag{display:inline-block;font:500 11.5px var(--mono);letter-spacing:.04em;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--ok-fg)}
+.tag.part{background:var(--part-bg);color:var(--part-fg)}
+.tag.no{background:var(--no-bg);color:var(--no-fg)}
+.tag.open{background:var(--mark);color:var(--fg2)}
+h1{font:600 clamp(30px,5vw,44px)/1.08 var(--cond);letter-spacing:-.01em;text-wrap:balance}
+h2{font:600 24px/1.2 var(--cond);margin-top:36px;text-wrap:balance}
+h3{font:600 16px/1.3 var(--sans);margin-top:10px}
+.eyebrow{font:500 12px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg2)}
+.lede{font-size:18px;color:var(--fg2)}
+a{color:var(--accent)}
+code,.num{font-family:var(--mono);font-size:.9em}
+figure{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px}
+figure img{width:100%;height:auto;border-radius:3px}
+figure img.l{display:var(--dl)} figure img.d{display:var(--dd)}
+figcaption{font-size:13.5px;color:var(--fg2);margin-top:10px;max-width:80ch}
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:0;border-top:1px solid var(--line)}
+.findings div{padding:14px 16px 14px 0;border-bottom:1px solid var(--line);min-width:0}
+.findings b{display:block;font:500 26px/1.1 var(--mono);font-variant-numeric:tabular-nums;color:var(--fg);margin-bottom:6px}
+.findings span{font-size:14px;color:var(--fg2)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:7px 12px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--fg2)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{background:var(--mark);border-radius:6px;padding:14px 16px;font-size:15px}
+.sim{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.sim canvas{width:100%;height:auto;display:block;border-radius:3px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 20px}
+.controls label{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--fg2)}
+.controls output{font-family:var(--mono);color:var(--fg)}
+.controls input[type=range]{width:100%;accent-color:var(--accent)}
+.readout{display:flex;flex-wrap:wrap;gap:6px 24px;font:13px var(--mono);font-variant-numeric:tabular-nums;color:var(--fg2)}
+.readout b{color:var(--fg);font-weight:500}
+.key{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--fg2)}
+.key i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+button{font:500 13px var(--sans);padding:6px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--fg);cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+ol,ul{padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;font:13px/1.5 var(--mono);overflow-x:auto}
+</style>
+
+<main>
+<nav class="tabs" aria-label="Onderdelen">
+  <a href="#toetsing" id="tab-toetsing">Toetsing aan data</a>
+  <a href="#model" id="tab-model">Model en simulatie</a>
+</nav>
+
+<section class="view" id="view-toetsing">
+<!--TOETSING-->
+</section>
+
+<section class="view" id="view-model" hidden>
+<p class="eyebrow">Simulatie en analyse · Stoof &amp; Goñi-Moreno, J. R. Soc. Interface 2020</p>
+<h1>Co-translationele dimerisatie op een polysoom, molecuul voor molecuul</h1>
+<p class="lede">De paper leidt analytisch af welk deel α van de eiwitten al tijdens de translatie dimeriseert, en laat zien dat die fractie de niet-lineariteit van genetische circuits bepaalt. Ik heb dat proces stochastisch nagebouwd op het niveau van afzonderlijke ribosomen en ketens, de analytische resultaten gereproduceerd en beide met elkaar vergeleken.</p>
+
+<div class="findings wide">
+  <div><b>0,0221</b><span>Hopf-punt van de repressilator in α. Reproduceert de 0,022 uit de paper met de parameters uit <code>Repressilator.nb</code>.</span></div>
+  <div><b>≈ 2×</b><span>De fractie <em>ketens</em> in een co-translationeel dimeer is bij lage α twee keer de paarkans uit vergelijking 3, omdat elke keten twee buren heeft.</span></div>
+  <div><b>0,23</b><span>Gesimuleerde α bij de gemeten λ ≈ 0,1/s, 300 AA en k<sub>D</sub> = 1. Tien keer boven het Hopf-punt.</span></div>
+  <div><b>λ &lt; 0,007/s</b><span>Initiatiesnelheid waaronder een eiwit van 300 AA onder α = 0,022 blijft. Bij λ = 0,1/s lukt dat alleen tot ongeveer 100 AA.</span></div>
+</div>
+
+<h2>Het proces</h2>
+<p>Ribosomen binden als Poisson-proces met snelheid λ aan het mRNA en verlengen de keten met ongeveer 10 aminozuren per seconde. Twee opeenvolgende ribosomen die Δt na elkaar startten, zitten 3·x<sub>bp</sub>·v·Δt uit elkaar en hun ketens verschillen x<sub>AA</sub>·v·Δt in lengte. De paper behandelt elke naschentketen als een bol rond het ribosoom met de contourlengte als straal. Het relatieve overlapvolume Ψ van twee bollen bepaalt de dimerisatiekans, gewogen met de reactieparameter k<sub>D</sub>.</p>
+
+<div class="sim wide">
+  <canvas id="cv" width="1800" height="560" aria-label="Animatie van ribosomen op een mRNA met overlappende naschentketens"></canvas>
+  <div class="key">
+    <span><i style="background:var(--accent)"></i>ribosoom met vrije keten (cirkel = bereik van de keten)</span>
+    <span><i style="background:var(--accent2)"></i>co-translationeel gedimeriseerd paar</span>
+  </div>
+  <div class="controls">
+    <label for="s-lam">Initiatiesnelheid λ <output id="o-lam"></output><input id="s-lam" type="range" min="-2.3" max="0.3" step="0.05" value="-1"></label>
+    <label for="s-len">Eiwitlengte <output id="o-len"></output><input id="s-len" type="range" min="60" max="400" step="10" value="300"></label>
+    <label for="s-kd">Reactieparameter k<sub>D</sub> <output id="o-kd"></output><input id="s-kd" type="range" min="-1" max="1.3" step="0.05" value="0"></label>
+    <label for="s-speed">Afspeelsnelheid <output id="o-speed"></output><input id="s-speed" type="range" min="0" max="3" step="0.25" value="1"></label>
+  </div>
+  <div class="readout">
+    <span>losgelaten ketens <b id="r-n">0</b></span>
+    <span>α gesimuleerd <b id="r-a">–</b></span>
+    <span>ribosomen op mRNA <b id="r-r">0</b></span>
+    <span>simulatietijd <b id="r-t">0 s</b></span>
+    <button id="b-reset" type="button">Tellers op nul</button>
+  </div>
+</div>
+<p style="font-size:14px;color:var(--fg2)">De animatie draait dezelfde regels als de volledige simulatie (variant B hieronder), op schaal getekend: 9 Å per codon langs het mRNA, 3 Å per aminozuur voor de straal. De getallen in dit rapport komen uit de C-implementatie, niet uit deze animatie.</p>
+
+<h2>Wat ik heb gebouwd</h2>
+<div class="tablewrap wide"><table>
+<thead><tr><th>Laag</th><th>Methode</th><th>Wat het toevoegt aan de paper</th></tr></thead>
+<tbody>
+<tr><td>Analytisch</td><td>Vergelijkingen 1–3, numeriek geïntegreerd</td><td>Reproductie van figuur 2; vergelijking 2 gecontroleerd tegen de afleiding met twee bolkappen (vgl. 11–13)</td></tr>
+<tr><td>Polysoom</td><td>Exacte Gillespie-simulatie: initiatie, TASEP-elongatie per codon, terminatie, dimerisatie met hazard k<sub>c</sub>·Ψ² voor elk paar vrije ketens</td><td>Meer dan twee ribosomen, ribosoomvoetafdruk (10 codons), exittunnel (30 AA), codonspecifieke snelheden en files</td></tr>
+<tr><td>Polymeer</td><td>Ketens als random coil (R<sub>g</sub> = 1,93·n<sup>0,598</sup> Å), effectieve concentratie tussen N-termini, hazard k<sub>on</sub>·c<sub>eff</sub>; Monte Carlo met uitgesloten ribosoomvolume als controle</td><td>Een fysische schatting van k<sub>D</sub> in plaats van een vrije parameter</td></tr>
+<tr><td>Circuit</td><td>Repressilator (vgl. 4–6) en toggle switch, ODE’s, Jacobiaan en eigenwaarden</td><td>Reproductie van figuur 3 en 4; gevoeligheid van het Hopf-punt; koppeling van α uit de simulatie aan het circuit</td></tr>
+</tbody></table></div>
+<p>De koppeling tussen de dimensieloze k<sub>D</sub> en een snelheid volgt uit de lage-α-limiet van vergelijking 3: k<sub>c</sub> = k<sub>D</sub>·v/R. k<sub>D</sub> is dus het aantal dimerisatiepogingen gedurende één translatie bij volledige overlap.</p>
+
+<h2>Reproductie van de paper</h2>
+<figure class="wide">
+  <img class="l" src="fig/f1_light.png" alt="Kaart van alpha tegen initiatiesnelheid en eiwitlengte voor kD 1 en 10">
+  <img class="d" src="fig/f1_dark.png" alt="Kaart van alpha tegen initiatiesnelheid en eiwitlengte voor kD 1 en 10">
+  <figcaption>Vergelijking 3 over het bereik van figuur 2. Bij λ = 0,1/s en 300 AA geeft de formule α = 0,17 (k<sub>D</sub> = 1) en 0,46 (k<sub>D</sub> = 10). De contour 0,022 is het Hopf-punt van de repressilator.</figcaption>
+</figure>
+<figure class="wide">
+  <img class="l" src="fig/f6_light.png" alt="Eigenwaarden, effectieve Hill-exponent en tijdreeksen van de repressilator">
+  <img class="d" src="fig/f6_dark.png" alt="Eigenwaarden, effectieve Hill-exponent en tijdreeksen van de repressilator">
+  <figcaption>Repressilator met k<sub>on</sub> = 10, k<sub>deg</sub> = 1/2400 s⁻¹, 1/τ<sub>s</sub> = 1/1200, k<sub>dim</sub> = 10⁻⁸. Het reële deel van het leidende eigenwaardenpaar wisselt van teken bij α = 0,0221 (k<sub>un</sub> = 0,005). De tijdreeksen gebruiken k<sub>un</sub> = 0,05 zoals het notebook; daar ligt het punt op 0,0233, dus α = 0,02 oscilleert nog net.</figcaption>
+</figure>
+<p>De effectieve Hill-exponent, de log-log-gevoeligheid van het dimeerniveau voor promotoractiviteit, daalt van 1,92 bij α = 0 naar 1,56 op het Hopf-punt en 1,16 bij α = 0,1. Dat is de kern van de paper in één getal: de co-translationele route is lineair in de expressie en verdunt de kwadratische route.</p>
+
+<h2>De stochastische polysoomsimulatie</h2>
+<figure class="wide">
+  <img class="l" src="fig/f2_light.png" alt="Kymograaf van ribosoomposities in de tijd voor twee initiatiesnelheden">
+  <img class="d" src="fig/f2_dark.png" alt="Kymograaf van ribosoomposities in de tijd voor twee initiatiesnelheden">
+  <figcaption>Elk spoor is één ribosoom dat het mRNA afloopt. Een spoor kleurt oranje zodra de keten dimeriseert. Bij λ = 1/s rijden ribosomen dicht op elkaar en dimeriseert bijna elke keten vroeg.</figcaption>
+</figure>
+<figure class="wide">
+  <img class="l" src="fig/f3_light.png" alt="Alpha tegen initiatiesnelheid: paper versus vier simulatievarianten">
+  <img class="d" src="fig/f3_dark.png" alt="Alpha tegen initiatiesnelheid: paper versus vier simulatievarianten">
+  <figcaption>Zwarte lijn: vergelijking 3. Gekleurde lijnen: fractie van de losgelaten ketens die deel is van een co-translationeel dimeer, per variant ongeveer 20.000 ketens.</figcaption>
+</figure>
+
+<h3>1. Paarkans is niet hetzelfde als ketenfractie</h3>
+<p>Vergelijking 3 geeft de kans dat één paar opeenvolgende ketens dimeriseert. In vergelijking 4 en 5 staat α voor de fractie van de expressie die als dimeer vrijkomt. In een rij van N ketens zijn er N−1 paren, en elk dimeer bevat twee ketens. Bij lage α is de ketenfractie dus 2× de paarkans: bij λ = 0,001/s geeft de formule 0,0022 en de simulatie 0,0044. Bij λ = 0,1/s is het 0,17 tegen 0,31. Bij hoge α remt concurrentie tussen buren het verschil.</p>
+
+<h3>2. De verzadiging hangt af van de gekozen vorm</h3>
+<p>De Michaelis-Menten-vorm in vergelijking 3 verzadigt bij 0,49 voor k<sub>D</sub> = 1. Een hazard-proces met dezelfde lage-α-limiet geeft per paar 1 − exp(−k<sub>D</sub>⟨Ψ²⟩) en komt op 0,62. Met meerdere buren loopt de simulatie door tot ongeveer 0,8. Onder λ ≈ 0,05/s maakt de vorm niet uit; daarboven wel.</p>
+
+<h3>3. Ribosomen zijn geen punten</h3>
+<div class="tablewrap wide"><table>
+<thead><tr><th>Variant</th><th>α bij λ = 0,01</th><th>α bij λ = 0,1</th><th>α bij λ = 1</th><th>Max. initiatie</th><th>Geblokkeerd bij λ = 1</th></tr></thead>
+<tbody>
+<tr><td>Paper, vgl. 3 (paar)</td><td class="n">0,022</td><td class="n">0,165</td><td class="n">0,431</td><td class="n">–</td><td class="n">–</td></tr>
+<tr><td>A · puntribosomen, alleen buren</td><td class="n">0,041</td><td class="n">0,308</td><td class="n">0,676</td><td class="n">2,5/s</td><td class="n">10%</td></tr>
+<tr><td>B · voetafdruk 10 codons, alle paren</td><td class="n">0,033</td><td class="n">0,273</td><td class="n">0,730</td><td class="n">0,59/s</td><td class="n">10%</td></tr>
+<tr><td>C · B + exittunnel 30 AA</td><td class="n">0,028</td><td class="n">0,229</td><td class="n">0,675</td><td class="n">0,59/s</td><td class="n">9%</td></tr>
+<tr><td>D · C + codonsnelheden (CV = 1)</td><td class="n">0,037</td><td class="n">0,271</td><td class="n">0,860</td><td class="n">0,36/s</td><td class="n">50%</td></tr>
+</tbody></table></div>
+<p>300 AA, k<sub>D</sub> = 1. De voetafdruk begrenst de werkelijke initiatiesnelheid op ongeveer 0,6/s, dus het rechterdeel van figuur 2 (λ tot 10/s) is fysisch niet bereikbaar. De exittunnel verbergt 30 residuen en verlaagt α met ongeveer 15%. Langzame codons maken files; ribosomen staan dan langer dicht bij elkaar en α stijgt. De aanname in Methods 4.1 dat de afstand tussen ribosomen constant blijft, is bij λ ≤ 0,1/s goed (1% van de ribosoomtijd geblokkeerd) en breekt bij λ ≥ 0,5/s.</p>
+
+<figure class="wide">
+  <img class="l" src="fig/f4_light.png" alt="Verdeling van ketenlengte en ribosoomafstand op het moment van dimerisatie">
+  <img class="d" src="fig/f4_dark.png" alt="Verdeling van ketenlengte en ribosoomafstand op het moment van dimerisatie">
+  <figcaption>Waar dimerisatie plaatsvindt bij λ = 0,1/s en k<sub>D</sub> = 1. Bins van 10.</figcaption>
+</figure>
+
+<h2>Gevolgen voor het circuit</h2>
+<figure class="wide">
+  <img class="l" src="fig/f7_light.png" alt="Ontwerpkaart van alpha en gevoeligheid van het Hopf-punt voor kdim">
+  <img class="d" src="fig/f7_dark.png" alt="Ontwerpkaart van alpha en gevoeligheid van het Hopf-punt voor kdim">
+  <figcaption>Links: gesimuleerde α met de oranje contour α = 0,022; links en onder die lijn oscilleert de repressilator met de parameters uit de paper. Rechts: het Hopf-punt als functie van de cytosolische dimerisatiesnelheid.</figcaption>
+</figure>
+<p>Met de eigen parameters van de paper ligt het werkpunt ver aan de verkeerde kant van de bifurcatie. Bij de gemeten λ ≈ 0,1/s en een repressor van 200 tot 300 AA is α tussen 0,12 en 0,23, terwijl oscillaties α &lt; 0,022 vragen. De ontwerpregels uit de paper werken in de simulatie wel in de voorspelde richting: een zwakkere RBS en een korter eiwit verlagen α. De benodigde stap is alleen groot: λ onder 0,007/s voor 300 AA, of een eiwit van hooguit 100 AA bij λ = 0,1/s.</p>
+<p>De marge hangt sterk af van k<sub>dim</sub>. Het Hopf-punt loopt op tot α ≈ 0,076 bij k<sub>dim</sub> ≈ 2·10⁻⁷ en verdwijnt boven ≈ 10⁻⁶. Dan dimeriseert vrijwel elk monomeer in het cytosol, wordt die route zelf lineair en oscilleert het systeem bij geen enkele α. Niet-lineariteit uit dimerisatie vraagt dus een zwak dimeer, en een zwak dimeer is juist gevoelig voor een kleine lineaire bijdrage.</p>
+
+<h2>Wat polymeerfysica zegt over k<sub>D</sub></h2>
+<figure class="wide">
+  <img class="l" src="fig/f5_light.png" alt="Effectieve concentratie tussen naschentketens en alpha als functie van kon">
+  <img class="d" src="fig/f5_dark.png" alt="Effectieve concentratie tussen naschentketens en alpha als functie van kon">
+  <figcaption>Links: effectieve concentratie van de ene N-terminus bij de andere, voor twee ribosomen op 25 nm. Rechts: α uit de polysoomsimulatie met hazard k<sub>on</sub>·c<sub>eff</sub>, tunnel van 30 AA, interface na 50 blootgestelde residuen, 17,7 Å per codon.</figcaption>
+</figure>
+<p>De bollen in de paper hebben de contourlengte als straal: 450 Å voor 150 residuen. Een ongevouwen keten van die lengte heeft een gyratiestraal van ongeveer 39 Å. Daar staat tegenover dat het mRNA geen rechte staaf is: ribosomen in een polysoom zitten op ongeveer 25 nm van elkaar, niet op de 90 nm die 100 codons × 9 Å oplevert. De twee vereenvoudigingen werken tegen elkaar in.</p>
+<p>In het polymeermodel loopt de effectieve concentratie op van 0,01 µM (80 AA) via 1,2 µM (150 AA) tot 6 µM (270 AA). Dat is duizend keer de concentratie van één molecuul in een <em>E. coli</em>-cel. De Monte Carlo zonder uitgesloten volume valt samen met de formule. Met ribosomen als harde bollen stijgt c<sub>eff</sub> een factor 1,5 tot 2 als de tunnels dezelfde kant op wijzen, en zakt hij met vier ordes als ze van elkaar af wijzen. De oriëntatie van de exittunnels in het polysoom is daarmee de grootste onbekende.</p>
+<p>Bij λ = 0,1/s geeft k<sub>on</sub> = 10⁴ M⁻¹s⁻¹ een α van 0,19, vergelijkbaar met k<sub>D</sub> ≈ 1 in het bollenmodel. Bij 10⁵ is α 0,60 en bij 10⁶ 0,82. Om onder 0,022 te blijven moet k<sub>on</sub> rond 10³ of lager liggen, wat past bij een interface die pas na vouwing ontstaat. De aanname k<sub>D</sub> = 1 tot 10 is dus fysisch verdedigbaar voor trage tot gemiddelde associatie.</p>
+
+<h2>Toggle switch en afstand tussen genen</h2>
+<figure class="wide">
+  <img class="l" src="fig/f8_light.png" alt="Tijdreeksen van de toggle switch voor drie waarden van alpha en drie afstanden">
+  <img class="d" src="fig/f8_dark.png" alt="Tijdreeksen van de toggle switch voor drie waarden van alpha en drie afstanden">
+  <figcaption>Vergelijkingen en parameters uit <code>ToggleSwitch.nb</code>. Gekleurde banden zijn de twee pulsen van monomeer (t = 500 en 1500). Het oordeel vraagt een verhouding van minstens 2 tussen de twee repressoren in alle drie de fasen.</figcaption>
+</figure>
+<p>Het patroon van figuur 4 komt terug: dichtbij (10² bp) schakelt alleen α = 0,02, op afstand (10⁷ bp) ook α = 0,1. Bij α = 0,5 en 10⁷ bp schakelt de switch na de eerste puls met groot contrast, maar vanuit de beginconditie is de verhouding maar 1,6.</p>
+<figure class="wide">
+  <img class="l" src="fig/f9_light.png" alt="Bistabiliteit over alpha en afstand voor twee lezingen van de vergelijkingen">
+  <img class="d" src="fig/f9_dark.png" alt="Bistabiliteit over alpha en afstand voor twee lezingen van de vergelijkingen">
+  <figcaption>Scan over 12 waarden van α en 11 afstanden, voor de vergelijkingen zoals ze in het notebook staan en voor een lezing met consistente indices.</figcaption>
+</figure>
+<div class="note"><strong>Punt om na te kijken in het notebook.</strong> In <code>eqs2</code> staat de lokale term als <code>−αloc·Ρ1l·A1</code> in de vergelijking van A1 én van A2, en verlaat Ρ1l de lokale pool via A1. Het lokale dimeer van gen 1 werkt zo op de eigen promotor, en Ρ2l komt in geen van beide promotorvergelijkingen voor. Als ik de indices lees zoals de tekst het beschrijft (lokaal dimeer van gen 1 bindt promotor 2), is de switch bij vrijwel alle α bistabiel en helpt afstand niet meer: het effect van nabijheid in figuur 4 verdwijnt. Ik kan niet zien met welke versie de gepubliceerde figuur is gemaakt, dus dit is een vraag, geen conclusie.</div>
+
+<h2>Beperkingen</h2>
+<ul>
+<li>De tekst komt uit de bioRxiv-versie (10.1101/2020.07.10.196667, juli 2020) en de notebooks op GitHub. De PMC-pagina weigerde geautomatiseerde toegang en de uitgever staat geen XML-download toe. Samenvatting en titel zijn gelijk aan de gepubliceerde versie; latere wijzigingen in de hoofdtekst heb ik niet gezien.</li>
+<li>Het is geen all-atom moleculaire dynamica. Translatie duurt tientallen seconden en ketenrelaxatie microseconden; de simulatie gebruikt die scheiding van tijdschalen en bemonstert ketenconformaties in evenwicht.</li>
+<li>Het notebook voor figuur 2 gebruikt een eenvoudiger variant dan vergelijking 2 en 3 (gelijke stralen, Δt direct als afstand). Ik heb de vergelijkingen uit de tekst gevolgd.</li>
+<li>Vergelijking 4 en 5 behouden geen massa (twee monomeren worden één dimeer zonder factor 2). Ik heb ze ongewijzigd overgenomen om de bifurcatie te kunnen vergelijken.</li>
+<li>Het polymeermodel negeert vouwing, chaperones en trigger factor, en neemt één mRNA zonder afbraak. De waarden voor k<sub>on</sub> en de tunneloriëntatie zijn aannames, geen metingen.</li>
+</ul>
+
+<h2>Zelf draaien</h2>
+<pre>cd ~/code/cotranslational-dimerization
+python3 compute.py   # alle simulaties, ongeveer een minuut
+python3 figures.py   # figuren in results/fig/</pre>
+</section>
+</main>
+
+<script>
+(function(){
+  const views={toetsing:document.getElementById('view-toetsing'),model:document.getElementById('view-model')};
+  function show(){
+    const h=(location.hash||'').replace('#','');
+    const name=views[h]?h:'toetsing';
+    for(const k in views){views[k].hidden=(k!==name);
+      const t=document.getElementById('tab-'+k); if(k===name)t.setAttribute('aria-current','page'); else t.removeAttribute('aria-current');}
+  }
+  window.addEventListener('hashchange',()=>{show();window.scrollTo(0,0);});
+  show();
+})();
+</script>
+<script>
+(function(){
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');
+  const $=id=>document.getElementById(id);
+  const V=10,FP=10;
+  let L=300,lam=0.1,kD=1,speed=1,rib=[],t=0,nCo=0,nFree=0;
+  function psi(r1,r2,d){const rs=Math.min(r1,r2),rl=Math.max(r1,r2);
+    if(rs<=0||d>=r1+r2)return 0; if(d<=rl-rs)return 1;
+    const a=r1+r2-d; return a*a*(d*d+2*d*(r1+r2)-3*(r1-r2)*(r1-r2))/(16*d*rs*rs*rs);}
+  function step(dt){
+    if((rib.length===0||rib[rib.length-1].p>=FP)&&Math.random()<lam*dt)rib.push({p:0,d:0});
+    for(let i=0;i<rib.length;i++){const r=rib[i];
+      const free=i===0||rib[i-1].p-r.p>FP;
+      if(Math.random()<V*dt){ if(r.p>=L){(r.d?nCo++:nFree++);rib.splice(i,1);i--;continue;} if(free)r.p++; }}
+    const kc=kD*V/L;
+    for(let i=0;i<rib.length;i++){ if(rib[i].d)continue;
+      for(let j=i+1;j<rib.length;j++){ if(rib[j].d)continue; if(rib[j].p<=0)break;
+        const ps=psi(rib[i].p,rib[j].p,3*(rib[i].p-rib[j].p));
+        if(ps>0&&Math.random()<kc*ps*ps*dt){rib[i].d=rib[j].d=1;break;} } }
+    t+=dt;
+  }
+  function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+  function draw(){
+    const W=cv.width,H=cv.height,m=60,sc=(W-2*m)/(3*L),y0=H-70;
+    const fg=css('--fg'),fg2=css('--fg2'),line=css('--line'),a1=css('--accent'),a2=css('--accent2');
+    cx.fillStyle=css('--surface');cx.fillRect(0,0,W,H);
+    cx.save();cx.beginPath();cx.rect(0,0,W,y0+26);cx.clip();
+    for(const r of rib){const x=m+3*r.p*sc,rad=r.p*sc; if(rad<1)continue;
+      cx.beginPath();cx.arc(x,y0,rad,0,2*Math.PI);
+      cx.globalAlpha=.10;cx.fillStyle=r.d?a2:a1;cx.fill();
+      cx.globalAlpha=.55;cx.lineWidth=2;cx.strokeStyle=r.d?a2:a1;cx.stroke();cx.globalAlpha=1;}
+    cx.restore();
+    cx.strokeStyle=fg2;cx.lineWidth=4;cx.beginPath();cx.moveTo(m,y0);cx.lineTo(W-m,y0);cx.stroke();
+    for(const r of rib){const x=m+3*r.p*sc;cx.beginPath();cx.arc(x,y0,11,0,2*Math.PI);cx.fillStyle=r.d?a2:a1;cx.fill();
+      cx.lineWidth=3;cx.strokeStyle=css('--surface');cx.stroke();}
+    cx.fillStyle=fg2;cx.font='24px "IBM Plex Mono",monospace';cx.textBaseline='top';
+    cx.textAlign='left';cx.fillText("5′ start",m,y0+30);cx.textAlign='right';cx.fillText("stop 3′ · "+L+" codons = "+(L*0.9).toFixed(0)+" nm",W-m,y0+30);
+  }
+  function read(){lam=Math.pow(10,+$('s-lam').value);L=+$('s-len').value;kD=Math.pow(10,+$('s-kd').value);speed=Math.pow(2,+$('s-speed').value);
+    $('o-lam').textContent=lam.toFixed(lam<0.1?3:2)+' /s';$('o-len').textContent=L+' AA';$('o-kd').textContent=kD.toFixed(kD<1?2:1);$('o-speed').textContent=speed.toFixed(1)+'× echte tijd';}
+  function reset(){nCo=nFree=0;t=0;}
+  ['s-lam','s-len','s-kd'].forEach(id=>$(id).addEventListener('input',()=>{const oldL=L;read();if(L!==oldL)rib=[];reset();}));
+  $('s-speed').addEventListener('input',read);$('b-reset').addEventListener('click',reset);
+  function prefill(){for(let i=0;i<4000;i++)step(0.01);reset();}
+  let last=null;const still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function frame(ts){ if(last!==null){let dt=Math.min((ts-last)/1000,0.1)*speed;while(dt>0){const h=Math.min(dt,0.01);step(h);dt-=h;}}
+    last=ts;draw();const n=nCo+nFree;
+    $('r-n').textContent=n;$('r-a').textContent=n?(nCo/n).toFixed(3).replace('.',','):'–';$('r-r').textContent=rib.length;$('r-t').textContent=t.toFixed(0)+' s';
+    if(!still)requestAnimationFrame(frame);}
+  read();prefill();
+  if(still){draw();}else requestAnimationFrame(frame);
+})();
+</script>
