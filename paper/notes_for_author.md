@@ -26,11 +26,18 @@ Most journals ask for a statement on the use of AI tools. That statement is not 
 9. **Assumptions behind the effective concentration.** RNA between ribosomes as a flexible chain (5.9 Å per nucleotide, Kuhn length 20 Å); nascent chains as unfolded coils; a 30-residue tunnel; pairing is irreversible. A stiffer RNA lowers the effective concentration at large distances.
 10. **Elongation rate.** The new simulations use 15 residues per second (Young & Bremer); the 2020 paper used 10. Results are stated in terms of the window W, so this only rescales codon numbers.
 
+## The three-dimensional simulation (section 2.4, Figure 4, Movie 1)
+
+11. **What is modelled.** Chains of beads (4 residues per bead) on two rigid ribosomes with the shape of PDB 9GFT (without HrpA), moved by Metropolis Monte Carlo with diffusion coefficients from the Stokes–Einstein relation in water. Not included: hydrodynamic interactions, exclusion between the two chains, folding of mCherry, other ribosomes on the RNA, and the RNA outside the pair. The RNA between the two ribosomes is a spring; the path drawn in the pictures is schematic.
+12. **Pairing on first contact.** Every contact between in-register interface beads of two competent chains leads to irreversible pairing. The time-lapse follows only microseconds of motion per 0.27 s of translation; this compression, not chemistry, sets when the chains pair in Figure 4G and in the movie. The text says so, and reads the compression as an effective pairing rate. After pairing, the paired stretch gets the length and stiffness of a coiled coil; that part is cosmetic.
+13. **The cell.** Section 2.4 uses the translational diffusion of polysomes in *E. coli* (0.04 µm² s⁻¹, Bakshi et al. 2012, abstract read) as a worst case for how fast two neighbouring ribosomes move relative to each other. The bound "the encounter cannot slow down more than in proportion to the mobility" is my argument (monotonicity of the slowest relaxation rate in the diffusion coefficients), not a cited result.
+14. **Rendering.** Figure 2A, Figure 4A–F and Movie 1 were rendered with the NGL viewer in headless Chrome (`paper/render/`). The rendered images are stored, so `make_figures.py` does not need Chrome. Journals usually want movies as MP4 (`figures/movie.mp4`); the GIF in the manuscript is a preview for GitHub.
+
 ## References
 
-11. Reference numbers follow the order of first citation. Kohn et al., Natan et al. and Lewis et al. are shortened with "et al." in the list.
-12. The TetR structure (PDB 4AC0) has no associated paper; it is cited as a database entry. A published TetR dimer structure may be preferable.
-13. Bibliographic details were checked against Crossref, Europe PMC and the PDB. The descriptions of what each paper shows were written from memory, except for Bertolini et al. (full text read) and Brandt et al. (abstract read).
+15. Reference numbers follow the order of first citation. Kohn et al., Natan et al. and Lewis et al. are shortened with "et al." in the list.
+16. The TetR structure (PDB 4AC0) has no associated paper; it is cited as a database entry. A published TetR dimer structure may be preferable.
+17. Bibliographic details were checked against Crossref, Europe PMC and the PDB. The descriptions of what each paper shows were written from memory, except for Bertolini et al. (full text read), and Brandt et al. and Bakshi et al. (abstracts read).
 
 ## Style
 
@@ -40,7 +47,9 @@ The wording follows the 2020 preprint: first person plural, British spelling ("d
 
     python3 compute_geometry.py && python3 compute_kernel.py     # structure-based geometry (about 10 minutes)
     python3 compute_tests.py && python3 compute_model.py         # tests against data, validation of the model
-    python3 paper/make_figures.py                                # figures 1 to 5
+    python3 compute_3d.py                                        # three-dimensional simulations (about 90 minutes)
+    python3 paper/render/render.py && python3 paper/render/movie.py   # molecular graphics (needs Chrome and ffmpeg)
+    python3 paper/make_figures.py                                # figures 1 to 6
     python3 paper/quoted_numbers.py                              # every number quoted in the text
 
 The manuscript is plain Markdown with LaTeX mathematics, which GitHub renders. `pandoc paper/manuscript.md -o manuscript.docx` (or `.tex`) converts it for submission.

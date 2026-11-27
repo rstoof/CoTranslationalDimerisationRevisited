@@ -1,0 +1,74 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>time-lapse frames</title></head>
+<body style="margin:0;background:#fff">
+<div id="viewport"></div>
+<!-- NGL viewer (MIT licence), pinned version -->
+<script src="https://unpkg.com/ngl@2.3.1/dist/ngl.js"></script>
+<script>
+// Renders every frame of /scene/<run>_scene.json: ribosome 1 at its coordinates in the structure,
+// ribosome 2 placed by the pose of the frame, nascent chains and the RNA between the ribosomes as
+// tubes. Every frame carries its own camera. Images are posted back to the local server.
+const RUN = new URLSearchParams(location.search).get('run') || 'r';
+const post = (name, body) => fetch('/save?name=' + RUN + '_' + name, {method: 'POST', body: body});
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+const rgb = h => [parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255];
+
+function orientation(C) {
+  const d = C.view_height / (2 * Math.tan(20 * Math.PI / 180));
+  const m = new NGL.Matrix4().makeBasis(new NGL.Vector3(...C.e1), new NGL.Vector3(...C.e2), new NGL.Vector3(...C.e3)).transpose();
+  const q = new NGL.Quaternion().setFromRotationMatrix(m);
+  return new NGL.Matrix4().compose(new NGL.Vector3(-C.centre[0], -C.centre[1], -C.centre[2]), q, new NGL.Vector3(d, d, d));
+}
+
+(async function () {
+  try {
+    const S = await (await fetch('/scene/' + RUN + '_scene.json')).json();
+    const vp = document.getElementById('viewport');
+    vp.style.width = S.width + 'px'; vp.style.height = S.height + 'px';
+    const stage = new NGL.Stage('viewport', {backgroundColor: 'white', cameraType: 'orthographic', cameraFov: 40,
+      clipNear: 0, clipFar: 100, clipDist: 0, fogNear: 100, fogFar: 100, quality: S.quality || 'medium', sampleLevel: 0,
+      lightIntensity: 1.0, ambientIntensity: 0.4});
+    const comps = [];
+    for (const g of ['rib1', 'rib2']) {
+      const comp = await stage.loadFile('/pdb/' + S.structure, {ext: 'cif', defaultRepresentation: false});
+      const names = new Set(); comp.structure.eachChain(c => names.add(c.chainname));
+      const key = S.groups.rib1.auth.filter(x => names.has(x)).length >= S.groups.rib1.label.filter(x => names.has(x)).length ? 'auth' : 'label';
+      const sel = '(' + S.groups[g][key].map(x => ':' + x).join(' or ') + ')';
+      const c = S.colors[g];
+      comp.addRepresentation('cartoon', {sele: sel + ' and nucleic', color: c.rna, aspectRatio: 3.0, radiusScale: 1.6, subdiv: 3, radialSegments: 6});
+      comp.addRepresentation('base', {sele: sel + ' and nucleic', color: c.rna, radiusScale: 1.0});
+      comp.addRepresentation('cartoon', {sele: sel + ' and protein', color: c.protein, aspectRatio: 4.0, radiusScale: 1.0, subdiv: 3, radialSegments: 6});
+      const m = S.mrna[g];   // the stretch of RNA that sits inside this ribosome
+      comp.addRepresentation('cartoon', {sele: ':' + m.chain[key] + ' and ' + m.from + '-' + m.to, color: S.colors.mrna, radiusScale: 5.0, aspectRatio: 1.0});
+      comps.push(comp);
+    }
+    stage.viewerControls.orient(orientation(S.frames[0].camera));
+    await sleep(1500);
+    let shapeComp = null;
+    for (let k = 0; k < S.frames.length; k++) {
+      const F = S.frames[k], p = F.pose;
+      comps[0].setVisibility(!!F.rib[0]);
+      comps[1].setVisibility(!!F.rib[1]);
+      comps[1].setTransform(new NGL.Matrix4().set(p[0], p[1], p[2], p[9], p[3], p[4], p[5], p[10], p[6], p[7], p[8], p[11], 0, 0, 0, 1));
+      if (shapeComp) stage.removeComponent(shapeComp);
+      const shape = new NGL.Shape('f' + k, {disableImpostor: true, radialSegments: 10, sphereDetail: 1});
+      for (const t of F.tubes) {
+        for (let i = 0; i < t.xyz.length; i++) {
+          const c = rgb(t.colors[i]);
+          shape.addSphere(t.xyz[i], c, t.radii[i]);
+          if (i > 0) shape.addCylinder(t.xyz[i - 1], t.xyz[i], c, Math.min(t.radii[i - 1], t.radii[i]));
+        }
+      }
+      shapeComp = stage.addComponentFromObject(shape); shapeComp.addRepresentation('buffer');
+      stage.viewerControls.orient(orientation(F.camera));
+      stage.viewer.requestRender();
+      await nextFrame();
+      const blob = await stage.makeImage({factor: F.factor || 1, antialias: true, trim: false, transparent: false});
+      await post('frame_' + String(k).padStart(4, '0') + '.png', blob);
+    }
+    await post('done.txt', 'ok');
+  } catch (e) { await post('error.txt', String(e && e.stack || e)); }
+})();
+</script>
+</body></html>

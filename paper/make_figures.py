@@ -6,6 +6,7 @@ Needs results/tests.pkl, geometry.pkl, kernel.pkl, model.pkl and data/pdb/9GFT.c
 """
 from __future__ import annotations
 
+import json
 import pickle
 import sys
 from pathlib import Path
@@ -13,6 +14,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import matplotlib.patheffects as pe
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch, Rectangle
@@ -62,29 +64,37 @@ def feature_bar(ax, feats, y=1.03, h=0.05):
 
 # ------------------------------------------------------------------------------- shared panels
 def panel_structure(ax):
-    """Projection of the two collided ribosomes (PDB 9GFT) onto the plane of the two tunnel exits."""
-    from ctd import pairgeom as pg
-    d = pg.Disome()
-    e1 = d.exit2 - d.exit1; dist = np.linalg.norm(e1); e1 /= dist
-    um = d.u1 + d.u2; e2 = um - (um @ e1) * e1; e2 /= np.linalg.norm(e2)
-    o = (d.exit1 + d.exit2) / 2
-    pr = lambda p: np.stack([(p - o) @ e1, (p - o) @ e2], -1) / 10.0
-    back = np.isin(d.at["atom"], ["P", "CA"])
-    for k, col in ((1, C[0]), (2, C[1])):
-        p = pr(d.xyz[(d.rib == k) & back][::4]); ax.scatter(p[:, 0], p[:, 1], s=1.2, color=col, alpha=0.35, linewidths=0)
-    m = pr(d.mrna); ax.plot(m[:, 0], m[:, 1], color=INK, lw=1.6)
-    for ex, u in ((d.exit1, d.u1), (d.exit2, d.u2)):
-        p = pr(ex); q = pr(ex + 70 * u)
-        ax.annotate("", q, p, arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.6))
-        ax.plot(*p, "o", color="white", mec=INK, mew=1.5, ms=7, zorder=5)
-    p1, p2 = pr(d.exit1), pr(d.exit2)
-    ax.plot([p1[0], p2[0]], [p1[1], p2[1]], color=INK, lw=1, ls=(0, (3, 3)))
-    ax.text(0, p1[1] + 1.6, f"{dist / 10:.0f} nm", ha="center", fontsize=9, bbox=dict(fc="white", ec="none", pad=1.5))
-    ax.text(0, -14.5, "RNA", ha="center", fontsize=8)
-    ax.text(p1[0] - 1.5, p1[1] + 7.5, "exit tunnel", ha="right", fontsize=8, color=INK2)
-    ax.set_aspect("equal"); ax.grid(False); ax.set_xlabel("nm"); ax.set_ylabel("nm"); ax.set_xlim(-28, 28); ax.set_ylim(-34, 11)
-    ax.legend(handles=[Patch(color=C[0], label="leading ribosome"), Patch(color=C[1], label="trailing ribosome")],
-              fontsize=8, loc="lower center", ncol=2, handlelength=1)
+    """The two collided ribosomes (PDB 9GFT) as ribbons with base stubs, seen at a right angle to the
+    plane through both tunnel exits. The image comes from paper/render/render.py; the markers are drawn
+    from the projected coordinates stored next to it."""
+    img = plt.imread(FIG / "render_structure.png")
+    meta = json.loads((FIG / "render_structure.json").read_text())
+    h = meta["view_height_A"] / 10.0; w = h * meta["aspect"]                       # nm
+    ax.imshow(img, extent=(0, w, 0, h), interpolation="antialiased", zorder=0)
+    P = {k: np.array(v) * (w, h) for k, v in meta["points"].items()}
+    halo = [pe.Stroke(linewidth=3.2, foreground="white"), pe.Normal()]
+    ax.plot(*zip(P["exit1"], P["exit2"]), color=INK, lw=1.1, ls=(0, (3, 3)), path_effects=halo, zorder=3)
+    for e, t in (("exit1", "tip1"), ("exit2", "tip2")):
+        ax.annotate("", P[t], P[e], arrowprops=dict(arrowstyle="-|>", color=INK, lw=1.7, shrinkA=0, shrinkB=0), zorder=4)
+        ax.plot(*P[e], "o", color="white", mec=INK, mew=1.5, ms=7, zorder=5)
+    mid = (P["exit1"] + P["exit2"]) / 2
+    ax.text(mid[0], mid[1], f"{meta['exit_distance_A'] / 10:.0f} nm", ha="center", va="center", fontsize=9,
+            bbox=dict(fc="white", ec="none", pad=1.6), zorder=6)
+    ax.text(P["tip1"][0] + 0.6, P["tip1"][1] + 0.3, "exit tunnel", ha="left", va="bottom", fontsize=8, color=INK2)
+    ink = np.argwhere(img[..., :3].min(-1) < 0.97)                                  # extent of the structure in the image
+    y0, x0 = ink.min(0) / img.shape[:2]; y1, x1 = ink.max(0) / img.shape[:2]
+    xl, xr, yb, yt = x0 * w - 1.0, x1 * w + 1.0, (1 - y1) * h - 3.2, P["tip1"][1] + 2.4
+    for key, col, lab in (("c1", C[0], "leading ribosome"), ("c2", C[1], "trailing ribosome")):
+        ax.text(P[key][0], yb + 0.2, lab, ha="center", va="bottom", fontsize=8.5, color=INK)
+        ax.plot([P[key][0] - 6.6], [yb + 0.85], "s", color=col, ms=5.5, clip_on=False)
+    ax.annotate("RNA, 3\u2032 end", P["mrna_end"], P["mrna_end"] + np.array([4.6, 0.6]), fontsize=8, ha="left", va="center",
+                arrowprops=dict(arrowstyle="-", color=INK2, lw=0.8, shrinkA=1, shrinkB=2))
+    ax.plot([mid[0] - 5, mid[0] + 5], [yt - 1.0, yt - 1.0], color=INK, lw=2.2, solid_capstyle="butt")
+    ax.text(mid[0], yt - 1.5, "10 nm", ha="center", va="top", fontsize=8)
+    ax.set_xlim(xl, xr); ax.set_ylim(yb, yt); ax.set_aspect("equal"); ax.grid(False)
+    ax.set_xticks([]); ax.set_yticks([])
+    for sp in ax.spines.values():
+        sp.set_visible(False)
 
 
 def panel_window(ax):
@@ -224,7 +234,109 @@ def fig3():
 
 
 # ---------------------------------------------------------------------------------------- figure 4
+CHAIN_A, CHAIN_B, IFACE_WAIT, IFACE, PAIRED = "#0d366b", "#8a3008", "#b9b0f2", "#5a45d6", "#d81b60"   # as in paper/render/movie.py
+SHOTS = [("leading", "leading interface exposed"), ("competent", "both interfaces exposed"), ("pairing", "the interfaces meet"),
+         ("paired", "paired; translation continues"), ("released", "leading chain released"), ("free", "both chains released")]
+
+
 def fig4():
+    """Three-dimensional simulation: snapshots of a time-lapse (rendered by paper/render/movie.py), when the
+    chains pair in all time-lapses, and the rate of first contact against the mobility of the ribosomes."""
+    from matplotlib.lines import Line2D
+    S = pickle.load(open(ROOT / "results" / "sim3d.pkl", "rb")); st = S["stats"]
+    info = json.loads((FIG / "movie.json").read_text())
+    shots = [(n, t) for n, t in SHOTS if n in info["shots"]]
+    imgs = {}
+    for n, _ in shots:
+        im = plt.imread(FIG / f"snapshot_{n}.png")[..., :3]
+        ink = np.argwhere(im.min(-1) < 0.97)
+        (y0, x0), (y1, x1) = ink.min(0), ink.max(0)
+        sc = info["shots"][n]["px_nm"]                                              # nm per pixel
+        imgs[n] = (im, (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) * sc, (y1 - y0) * sc, sc)
+    wn = max(v[3] for v in imgs.values()) + 3.0; hn = max(v[4] for v in imgs.values()) + 3.0     # one window (nm) for all
+    width = 9.8
+    hs = width / 3 * hn / wn
+    fig = plt.figure(figsize=(width, 2 * hs + 0.45 + 3.3 + 0.9), constrained_layout=True)
+    gs = fig.add_gridspec(4, 6, height_ratios=[hs, hs, 0.3, 3.3])
+    for k, (n, text) in enumerate(shots):
+        ax = fig.add_subplot(gs[k // 3, 2 * (k % 3):2 * (k % 3) + 2])
+        im, cx, cy, _, _, sc = imgs[n]
+        ax.imshow(im, extent=(-cx * sc, (im.shape[1] - cx) * sc, -(im.shape[0] - cy) * sc, cy * sc), interpolation="antialiased")
+        ax.set_xlim(-wn / 2, wn / 2); ax.set_ylim(-hn / 2, hn / 2); ax.set_aspect("equal"); ax.grid(False)
+        ax.set_xticks([]); ax.set_yticks([])
+        for sp in ax.spines.values():
+            sp.set_visible(False)
+        ax.set_title(f"{info['shots'][n]['time']:.1f} s: {text}", fontsize=8.8, fontweight="normal", loc="left", pad=3)
+        panel(ax, "ABCDEF"[k])
+        if k == 0:
+            ax.plot([-wn / 2 + 1, -wn / 2 + 11], [-hn / 2 + 1.2] * 2, color=INK, lw=2.2, solid_capstyle="butt")
+            ax.text(-wn / 2 + 6, -hn / 2 + 1.8, "10 nm", ha="center", va="bottom", fontsize=8)
+    ax = fig.add_subplot(gs[2, :]); ax.axis("off")
+    hd = [Line2D([], [], color=IFACE_WAIT, lw=4.5, label="interface, emerging"), Line2D([], [], color=IFACE, lw=4.5, label="interface, competent"),
+          Line2D([], [], color=PAIRED, lw=4.5, label="paired"), Line2D([], [], color=CHAIN_A, lw=3.2, label="rest of the leading chain"),
+          Line2D([], [], color=CHAIN_B, lw=3.2, label="rest of the trailing chain"), Line2D([], [], color="#3a3a38", lw=3.2, label="RNA (path schematic)")]
+    ax.legend(handles=hd, loc="center", ncol=6, fontsize=8, handlelength=1.6, columnspacing=1.4)
+
+    # when do the chains pair? one line per time-lapse
+    gb = gs[3, :].subgridspec(1, 2, width_ratios=[1.25, 1])
+    ax = fig.add_subplot(gb[0])
+    lap = sorted(S["timelapse"], key=lambda r: (r[1]["first_pair_codon"] is None, r[1]["first_pair_codon"] or 0))
+    m0 = lap[0][1]
+    b = m0["res_per_bead"]
+    c_comp = -(-(m0["tunnel"] + (m0["i0"] + m0["gate"]) * b) // b) * b
+    c_rel = -(-(m0["L"] - m0["spacing"]) // b) * b
+    for i, (steps, m) in enumerate(lap):
+        y = len(lap) - i
+        cp = m["first_pair_codon"]
+        ax.plot([0, m["L"]], [y, y], color=GRID, lw=1.2, zorder=1)
+        ax.plot([c_comp, cp if cp is not None else c_rel], [y, y], color=IFACE, lw=4.2, solid_capstyle="butt", zorder=2)
+        if cp is not None:
+            ax.plot([cp, m["L"]], [y, y], color=PAIRED, lw=4.2, solid_capstyle="butt", zorder=2)
+            ax.plot([cp], [y], "o", color="white", mec=INK, mew=1.2, ms=5.5, zorder=3)
+    for x, lab, ha in ((c_comp, "interface of the\ntrailing chain exposed", "right"), (c_rel, "leading chain\nreleased", "left")):
+        ax.axvline(x, color=MUTED, lw=1, ls=(0, (2, 2)), zorder=0)
+        ax.text(x + (-4 if ha == "right" else 4), len(lap) + 0.9, lab, ha=ha, va="bottom", fontsize=7.5, color=INK2)
+    ax.set_xlim(0, m0["L"]); ax.set_ylim(0.3, len(lap) + 2.6); ax.set_yticks([]); ax.grid(False)
+    ax.spines["left"].set_visible(False)
+    ax.set_xlabel("position of the trailing ribosome (codon)"); ax.set_ylabel(f"{len(lap)} time-lapses")
+    sec = ax.secondary_xaxis("top", functions=(lambda c: c / m0["v"], lambda t: t * m0["v"]))
+    sec.set_xlabel("translation time (s)", fontsize=8.5); sec.tick_params(labelsize=8)
+    ax.legend(handles=[Line2D([], [], color=IFACE, lw=4.2, label="both competent, not paired"), Line2D([], [], color=PAIRED, lw=4.2, label="paired"),
+                       Line2D([], [], color="white", marker="o", mec=INK, mew=1.2, ms=5.5, lw=0, label="first contact")],
+              fontsize=7.6, loc="lower left", bbox_to_anchor=(0.0, 0.0))
+    panel(ax, "G")
+
+    # rate of first contact against the mobility of the ribosomes
+    from ctd import chain3d
+    ax = fig.add_subplot(gb[1])
+    rs = [st["rate"][m] for m in sorted(st["rate"])]
+    mob = np.array([r["mobility"] for r in rs]); k = np.array([r["rate"] for r in rs])
+    err = np.array([[r["rate"] - r["lo"] for r in rs], [r["hi"] - r["rate"] for r in rs]])
+    d_cell = 0.04e8 / chain3d.D_RIBOSOME          # polysomes in E. coli, relative to a ribosome in water
+    pw = st["power"]
+    ax.axhspan(0.1, 1.0, color=C[3], alpha=0.28, lw=0)
+    ax.text(mob.max() * 1.6, 0.31, r"reaction, $k_{\mathrm{on}}c_{\mathrm{eff}}$ (section 2.3)", ha="right", va="center", fontsize=7.6, color=INK2)
+    xs = np.logspace(np.log10(mob.min()), np.log10(mob.max()), 50)
+    ax.plot(xs, pw["k1"] * xs ** pw["gamma"], color=INK, lw=1.2, label=rf"fit: rate $\propto$ mobility$^{{{pw['gamma']:.2f}}}$")
+    i0 = int(np.argmin(mob))
+    xb = np.array([d_cell, mob[i0]])
+    ax.plot(xb, rs[i0]["lo"] * xb / mob[i0], color=INK, lw=1.2, ls=(0, (1, 2)), label="lower bound: decline in\nproportion to the mobility")
+    ax.errorbar(mob, k, yerr=err, fmt="o", color=C[0], ms=5.5, mec="white", mew=0.8, elinewidth=1.4, capsize=2.5, zorder=3,
+                label="simulations (95% interval)")
+    ax.axvline(1.0, color=MUTED, lw=1, ls=(0, (2, 2))); ax.axvline(d_cell, color=MUTED, lw=1, ls=(0, (2, 2)))
+    ax.set_xscale("log"); ax.set_yscale("log")
+    yhi = k.max() * 40
+    ax.set_ylim(0.05, yhi); ax.set_xlim(d_cell / 2, mob.max() * 2)
+    ax.text(1.0, yhi / 1.5, "water ", ha="right", va="top", fontsize=7.6, color=INK2)
+    ax.text(d_cell, yhi / 1.5, " polysomes in\n $E. coli$ [19]", ha="left", va="top", fontsize=7.6, color=INK2)
+    ax.set_xlabel("mobility of the ribosomes (relative to water)"); ax.set_ylabel(r"rate of first contact (s$^{-1}$)")
+    ax.legend(fontsize=7.2, loc="lower right", bbox_to_anchor=(1.0, 0.2), frameon=True, facecolor="white", edgecolor="none", framealpha=1.0)
+    panel(ax, "H")
+    save(fig, "fig4_3d")
+
+
+# ---------------------------------------------------------------------------------------- figure 5
+def fig5():
     H = R["human"]
     fig, axs = plt.subplots(1, 3, figsize=(10.4, 3.5), constrained_layout=True)
     ax = axs[0]
@@ -252,11 +364,11 @@ def fig4():
     ax.set_xlabel("codons translated after the onset"); ax.set_ylabel("assembly efficiency [2]")
     ax.text(0.97, 0.05, rf"Spearman $\rho$ = {e['rho_remaining'][0]:.2f}", transform=ax.transAxes, ha="right", fontsize=8.5)
     ax.legend(fontsize=8, loc="upper left"); panel(ax, "C")
-    save(fig, "fig4_human")
+    save(fig, "fig5_human")
 
 
-# ---------------------------------------------------------------------------------------- figure 5
-def fig5():
+# ---------------------------------------------------------------------------------------- figure 6
+def fig6():
     P = R["repressors"]; H = R["human"]; Lc = R["locus"]
     fig, axs = plt.subplots(2, 2, figsize=(10.0, 7.0), constrained_layout=True)
     ax = axs[0, 0]
@@ -319,11 +431,11 @@ def fig5():
     ax.set_xscale("log"); ax.set_yscale("log"); ax.set_ylim(top=80)
     ax.set_xlabel(r"transcripts per second"); ax.set_ylabel("co-translational dimers per second")
     ax.legend(fontsize=7.5, loc="upper left"); panel(ax, "D")
-    save(fig, "fig5_circuits")
+    save(fig, "fig6_circuits")
 
 
 if __name__ == "__main__":
-    which = sys.argv[1:] or ["fig1", "fig2", "fig3", "fig4", "fig5"]
+    which = sys.argv[1:] or ["fig1", "fig2", "fig3", "fig4", "fig5", "fig6"]
     for name in which:
         globals()[name]()
     print("figures written to", FIG)

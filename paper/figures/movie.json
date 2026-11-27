@@ -1,0 +1,68 @@
+{
+ "seed": 4,
+ "frames": 241,
+ "fps": 10,
+ "frame_ns": 85.96374891410206,
+ "clip_frames": 20,
+ "motion_competent_us": 30.087312119935717,
+ "motion_other_us": 1.7192749782820411,
+ "first_pair_codon": 268,
+ "first_pair_time": 17.866666666666667,
+ "shots": {
+  "leading": {
+   "time": 7.733333333333333,
+   "codon_a": 164,
+   "codon_b": 116,
+   "paired": 0,
+   "state": "interface of the leading chain exposed; trailing chain not yet competent",
+   "view_height": 597.836927674094,
+   "px_nm": 0.041516453310700974
+  },
+  "competent": {
+   "time": 13.6,
+   "codon_a": 252,
+   "codon_b": 204,
+   "paired": 0,
+   "state": "both interfaces exposed: the chains are competent",
+   "view_height": 651.55129202585,
+   "px_nm": 0.04524661750179514
+  },
+  "pairing": {
+   "time": 17.866666666666667,
+   "codon_a": 316,
+   "codon_b": 268,
+   "paired": 68,
+   "state": "68 interface residues paired: the chains join the two ribosomes",
+   "view_height": 747.3768824343441,
+   "px_nm": 0.05190117239127389
+  },
+  "paired": {
+   "time": 20.533333333333335,
+   "codon_a": 356,
+   "codon_b": 308,
+   "paired": 140,
+   "state": "140 interface residues paired: the chains join the two ribosomes",
+   "view_height": 810.4803288849411,
+   "px_nm": 0.05628335617256535
+  },
+  "released": {
+   "time": 23.2,
+   "codon_a": 395,
+   "codon_b": 348,
+   "paired": 140,
+   "state": "leading chain released; the dimer hangs on the trailing ribosome",
+   "view_height": 968.0297592039171,
+   "px_nm": 0.06722428883360536
+  },
+  "free": {
+   "time": 26.666666666666668,
+   "codon_a": 395,
+   "codon_b": 395,
+   "paired": 140,
+   "state": "both chains released: a dimer formed during translation",
+   "view_height": 968.0297592039171,
+   "px_nm": 0.06722428883360536
+  }
+ },
+ "zip_us": 0.2578912467423062
+}

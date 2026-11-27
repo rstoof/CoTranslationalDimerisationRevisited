@@ -1,0 +1,63 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ribosome pair</title></head>
+<body style="margin:0;background:#fff">
+<div id="viewport"></div>
+<!-- NGL viewer (MIT licence), pinned version -->
+<script src="https://unpkg.com/ngl@2.3.1/dist/ngl.js"></script>
+<script>
+// Renders the scene described in /scene/<run>_scene.json and posts the images back to the local server.
+const RUN = new URLSearchParams(location.search).get('run') || 'r';
+const post = (name, body) => fetch('/save?name=' + RUN + '_' + name, {method: 'POST', body: body});
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function orientation(S, d) {
+  const m = new NGL.Matrix4().makeBasis(new NGL.Vector3(...S.e1), new NGL.Vector3(...S.e2), new NGL.Vector3(...S.e3)).transpose();
+  const q = new NGL.Quaternion().setFromRotationMatrix(m);
+  return new NGL.Matrix4().compose(new NGL.Vector3(-S.centre[0], -S.centre[1], -S.centre[2]), q, new NGL.Vector3(d, d, d));
+}
+
+(async function () {
+  try {
+    const S = await (await fetch('/scene/' + RUN + '_scene.json')).json();
+    const vp = document.getElementById('viewport');
+    vp.style.width = S.width + 'px'; vp.style.height = S.height + 'px';
+    const stage = new NGL.Stage('viewport', {backgroundColor: 'white', cameraType: 'orthographic', cameraFov: 40,
+      clipNear: 0, clipFar: 100, clipDist: 0, fogNear: 100, fogFar: 100, quality: 'high', sampleLevel: 1,
+      lightIntensity: 1.0, ambientIntensity: 0.35});
+    const comp = await stage.loadFile('/pdb/' + S.structure, {ext: 'cif', defaultRepresentation: false});
+    // which chain identifier does the viewer use?
+    const names = new Set(); comp.structure.eachChain(c => names.add(c.chainname));
+    const key = S.groups.rib1.auth.filter(x => names.has(x)).length >= S.groups.rib1.label.filter(x => names.has(x)).length ? 'auth' : 'label';
+    const sel = g => S.groups[g][key].map(x => ':' + x).join(' or ');
+    const add = (type, group, extra, params) => comp.addRepresentation(type, Object.assign({sele: '(' + sel(group) + ') and ' + extra}, params));
+    for (const [g, c] of [['rib1', S.colors.rib1], ['rib2', S.colors.rib2]]) {
+      add('cartoon', g, 'nucleic', {color: c.rna, aspectRatio: 3.0, radiusScale: 1.6, subdiv: 4, radialSegments: 8});
+      add('base', g, 'nucleic', {color: c.rna, radiusScale: 1.0});
+      add('cartoon', g, 'protein', {color: c.protein, aspectRatio: 4.0, radiusScale: 1.0, subdiv: 4, radialSegments: 8});
+    }
+    add('cartoon', 'mrna', 'nucleic', {color: S.colors.mrna, radiusScale: 5.0, aspectRatio: 1.0});
+    add('base', 'mrna', 'nucleic', {color: S.colors.mrna, radiusScale: 2.0});
+    if (S.groups.nascent[key].length) add('spacefill', 'nascent', 'protein', {color: S.colors.nascent});
+    // extra objects: nascent chains of a simulation (tubes of spheres), markers
+    const shape = new NGL.Shape('extra', {disableImpostor: true, radialSegments: 12, sphereDetail: 2});
+    for (const ch of (S.chains || [])) {
+      for (let i = 0; i < ch.xyz.length; i++) {
+        shape.addSphere(ch.xyz[i], ch.colors[i], ch.radius);
+        if (i > 0) shape.addCylinder(ch.xyz[i - 1], ch.xyz[i], ch.colors[i], ch.radius);
+      }
+    }
+    for (const s of (S.spheres || [])) shape.addSphere(s.xyz, s.color, s.radius);
+    const sc = stage.addComponentFromObject(shape); sc.addRepresentation('buffer');
+    const d = S.view_height / (2 * Math.tan(20 * Math.PI / 180));
+    stage.viewerControls.orient(orientation(S, d));
+    stage.viewer.requestRender();
+    await sleep(S.settle || 2500);
+    const pts = (S.points || []).map(p => { const v = stage.viewerControls.getPositionOnCanvas(new NGL.Vector3(...p)); return [v.x, v.y]; });
+    await post('points.json', JSON.stringify({key: key, canvas: [vp.clientWidth, vp.clientHeight], points: pts}));
+    const blob = await stage.makeImage({factor: S.factor || 2, antialias: true, trim: false, transparent: false});
+    await post('image.png', blob);
+    await post('done.txt', 'ok');
+  } catch (e) { await post('error.txt', String(e && e.stack || e)); }
+})();
+</script>
+</body></html>

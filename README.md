@@ -8,6 +8,9 @@ against ribosome-profiling data and ribosome structures, and propose a replaceme
 
 - **Manuscript:** [paper/manuscript.md](paper/manuscript.md)
 - **Open points for the author:** [paper/notes_for_author.md](paper/notes_for_author.md)
+- **Movie:** [paper/figures/movie.mp4](paper/figures/movie.mp4), a three-dimensional time-lapse of two nascent chains that dimerise during translation (preview below)
+
+![Two nascent chains dimerise during translation](paper/figures/movie.gif)
 
 This is an unreviewed draft. It was produced with Claude (Anthropic); see the notes for what still needs checking.
 
@@ -24,6 +27,8 @@ A nascent chain can dimerise only while its dimerisation interface is outside th
 | `ctd/polysome2.c`, `ctd/sim2.py` | stochastic simulation of a polysome and of a gene with coupled transcription and translation |
 | `ctd/disp.py` | re-analysis of the Disome Selective Profiling data of Bertolini et al. 2021 |
 | `ctd/structure.py`, `ctd/pairgeom.py` | mmCIF reader, tunnel exits, nascent chains around the real ribosome shape |
+| `ctd/chain3d.c`, `ctd/chain3d.py` | three-dimensional dynamics of two nascent chains on a tethered pair of ribosomes |
+| `paper/render/` | molecular graphics: `render.py` (Figure 2A), `movie.py` (Figure 4A–F and the movie) |
 | `ctd/geometry.py`, `ctd/polysome.c`, `ctd/circuits.py` | the 2020 model: equations 1–3, the repressilator and the toggle switch |
 | `compute_*.py` | run the analyses and write `results/*.pkl` |
 | `data/` | derived data (per-codon footprint counts, effective-concentration table) and PDB files |
@@ -43,7 +48,13 @@ To recompute from the stored derived data:
     python3 compute_kernel.py            # effective concentration as a table (about 6 minutes)
     python3 compute_tests.py             # tests against the profiling data
     python3 compute_model.py             # validation of the closed form against simulations
+    python3 compute_3d.py                # three-dimensional simulations (about 90 minutes on 8 cores)
     python3 compute.py                   # the 2020 model (first part of the work)
+
+The molecular graphics are stored in `paper/figures/` (`render_structure.png`, `snapshot_*.png`, `movie.*`), so the figures can be rebuilt without rendering. To render them again (needs Google Chrome, and internet access for the NGL viewer, which is loaded from unpkg.com):
+
+    python3 paper/render/render.py       # the two ribosomes of Figure 2A
+    python3 paper/render/movie.py        # snapshots of Figure 4 and the movie (also needs ffmpeg)
 
 To rebuild the derived data from the public sources (needs `h5py`):
 

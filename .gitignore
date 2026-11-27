@@ -12,3 +12,7 @@ data/bertolini/
 results/fig/
 results/*_log.txt
 results_log.txt
+results/clips/
+results/sim3d_batch1.pkl
+results/sim3d_log.txt
+results/sim3d_log*.txt
