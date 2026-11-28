@@ -4,9 +4,9 @@ Remove this file before the manuscript goes anywhere. It lists what in `manuscri
 
 ## Status
 
-The manuscript, its figures and the code behind them were produced with Claude (Anthropic) on 27 November 2026, in one working session. Nothing has been checked by a second person. Every number in the text comes from the result files in `results/`; `python3 paper/quoted_numbers.py` prints them all, so each one can be traced.
+The manuscript, its figures and the code behind them were produced with Claude (Anthropic) on 27–28 November 2026, in one working session. Nothing has been checked by a second person. Every number in the text comes from the result files in `results/`; `python3 paper/quoted_numbers.py` prints them all, so each one can be traced.
 
-Most journals ask for a statement on the use of AI tools. That statement is not in the draft yet.
+Most journals ask for a statement on the use of AI tools. A draft is in the section "Declaration of AI use"; the bracketed part, on what you checked or rewrote, is yours to complete.
 
 ## Decisions that are yours
 

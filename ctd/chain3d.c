@@ -23,6 +23,8 @@
 #include <stdint.h>
 #include <string.h>
 
+/* Random numbers: xoshiro256** with splitmix64 seeding, after the public-domain reference code of
+ * D. Blackman and S. Vigna (https://prng.di.unimi.it/; ACM Trans. Math. Softw. 47:36, 2021). */
 static uint64_t s[4];
 static inline uint64_t rotl(uint64_t x, int k) { return (x << k) | (x >> (64 - k)); }
 static uint64_t next_u64(void) {
